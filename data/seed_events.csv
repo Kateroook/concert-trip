@@ -1,0 +1,6 @@
+external_id,artist,venue,city,country,event_date,ticket_type_raw,on_sale_date,status,url
+seed-001,Tame Impala,Co-op Live,Manchester,GB,2027-05-28,Standing - General Admission,2026-08-28,limited,https://example.org/seed-001
+seed-002,Tame Impala,The O2,London,GB,2027-06-01,Golden Circle Standing,2026-08-28,low,https://example.org/seed-002
+seed-003,Tame Impala,Rotterdam Ahoy,Rotterdam,NL,2027-06-07,Vloer staanplaats,2026-08-28,available,https://example.org/seed-003
+seed-004,Tame Impala,Accor Arena,Paris,FR,2027-06-12,Fosse Or,2026-09-02,available,https://example.org/seed-004
+seed-005,Tame Impala,Lanxess Arena,Koeln,DE,2027-06-17,Stehplatz Innenraum,2026-08-28,sold_out,https://example.org/seed-005

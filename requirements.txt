@@ -1,0 +1,17 @@
+# Робота з даними
+httpx==0.27.2
+beautifulsoup4==4.12.3
+SQLAlchemy==2.0.36
+APScheduler==3.10.4
+
+# Інтерфейс
+streamlit==1.39.0
+
+# Сповіщення
+python-telegram-bot==21.6
+
+# Витяг дат із тексту анонсу
+anthropic==0.39.0
+
+# Тести
+pytest==8.3.3
