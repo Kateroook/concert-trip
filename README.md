@@ -42,12 +42,20 @@ streamlit run concertrip/ui/app.py
 pytest
 ```
 
+Міграції бази даних:
+
+```bash
+alembic upgrade head
+alembic downgrade base
+```
+
 ## Структура
 
 ```
 concertrip/
   config.py              налаштування з .env
   db.py                  підключення до бази й базовий клас моделей
+  models.py              моделі джерел, артистів, майданчиків і подій
   sources/
     ticketmaster.py      CT-21  клієнт до API Ticketmaster
     local_parser.py      CT-22  парсер локального продавця
@@ -63,6 +71,7 @@ concertrip/
     app.py               CT-71  веб-інтерфейс
 data/
   seed_events.csv        резервний набір подій для демонстрації
+alembic/                  міграції схеми бази даних
 tests/                   тести
 docs/                    нотатки з досліджень і рішення щодо архітектури
 ```
