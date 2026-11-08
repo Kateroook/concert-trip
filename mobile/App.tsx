@@ -98,7 +98,9 @@ function AppContent() {
             />
             <View style={styles.resultsRow}>
               <Text style={styles.results}>
-                {loading ? 'Loading events...' : `${filteredEvents.length} events`}
+                {loading
+                  ? 'Loading events...'
+                  : `${filteredEvents.length} events`}
               </Text>
               {(query || country !== 'All' || status !== 'all') && (
                 <Pressable onPress={resetFilters} accessibilityRole="button">
@@ -114,7 +116,11 @@ function AppContent() {
           ) : error ? (
             <View style={styles.emptyState}>
               <Text style={styles.empty}>{error}</Text>
-              <Pressable onPress={retry} style={styles.retryButton} accessibilityRole="button">
+              <Pressable
+                onPress={retry}
+                style={styles.retryButton}
+                accessibilityRole="button"
+              >
                 <Text style={styles.ticketButtonText}>Try again</Text>
               </Pressable>
             </View>

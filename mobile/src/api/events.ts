@@ -14,13 +14,19 @@ export type EventQuery = {
   status?: EventStatus | 'all';
 };
 
-export async function fetchEvents(query: EventQuery = {}): Promise<EventsResponse> {
+export async function fetchEvents(
+  query: EventQuery = {},
+): Promise<EventsResponse> {
   const params = new URLSearchParams({ page: '1', page_size: '100' });
   if (query.q) params.set('q', query.q);
-  if (query.country && query.country !== 'All') params.set('country', query.country);
-  if (query.status && query.status !== 'all') params.set('status', query.status);
+  if (query.country && query.country !== 'All')
+    params.set('country', query.country);
+  if (query.status && query.status !== 'all')
+    params.set('status', query.status);
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/events?${params.toString()}`);
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/events?${params.toString()}`,
+  );
   if (!response.ok) {
     throw new Error(`Events request failed (${response.status})`);
   }

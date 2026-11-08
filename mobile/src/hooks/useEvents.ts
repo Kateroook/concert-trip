@@ -20,7 +20,11 @@ export function useEvents() {
       })
       .catch(requestError => {
         if (active) {
-          setError(requestError instanceof Error ? requestError.message : 'Could not load events');
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : 'Could not load events',
+          );
         }
       })
       .finally(() => {
