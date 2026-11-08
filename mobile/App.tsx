@@ -125,7 +125,10 @@ function AppContent() {
             />
             <FilterRow
               label="Status"
-              options={['all', ...Array.from(new Set(events.map(event => event.status)))]}
+              options={[
+                'all',
+                ...Array.from(new Set(events.map(event => event.status))),
+              ]}
               selected={status}
               onSelect={value => setStatus(value as EventStatus | 'all')}
             />
