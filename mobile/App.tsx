@@ -13,7 +13,8 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { events, EventStatus, ConcertEvent } from './src/data/events';
+import { EventStatus, ConcertEvent } from './src/data/events';
+import { useEvents } from './src/hooks/useEvents';
 
 function App() {
   return (
@@ -26,13 +27,14 @@ function App() {
 
 function AppContent() {
   const safeAreaInsets = useSafeAreaInsets();
+  const { events, loading, error, retry } = useEvents();
   const [query, setQuery] = useState('');
   const [country, setCountry] = useState('All');
   const [status, setStatus] = useState<EventStatus | 'all'>('all');
 
   const countries = useMemo(
     () => ['All', ...Array.from(new Set(events.map(event => event.country)))],
-    [],
+    [events],
   );
   const filteredEvents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -48,7 +50,7 @@ function AppContent() {
 
       return matchesQuery && matchesCountry && matchesStatus;
     });
-  }, [country, query, status]);
+  }, [country, events, query, status]);
 
   const resetFilters = () => {
     setQuery('');
@@ -95,7 +97,11 @@ function AppContent() {
               onSelect={value => setStatus(value as EventStatus | 'all')}
             />
             <View style={styles.resultsRow}>
-              <Text style={styles.results}>{filteredEvents.length} events</Text>
+              <Text style={styles.results}>
+                {loading
+                  ? 'Loading events...'
+                  : `${filteredEvents.length} events`}
+              </Text>
               {(query || country !== 'All' || status !== 'all') && (
                 <Pressable onPress={resetFilters} accessibilityRole="button">
                   <Text style={styles.reset}>Reset filters</Text>
@@ -105,7 +111,22 @@ function AppContent() {
           </>
         }
         ListEmptyComponent={
-          <Text style={styles.empty}>No concerts match these filters.</Text>
+          loading ? (
+            <Text style={styles.empty}>Loading events from ConcerTrip...</Text>
+          ) : error ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.empty}>{error}</Text>
+              <Pressable
+                onPress={retry}
+                style={styles.retryButton}
+                accessibilityRole="button"
+              >
+                <Text style={styles.ticketButtonText}>Try again</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Text style={styles.empty}>No concerts match these filters.</Text>
+          )
         }
         showsVerticalScrollIndicator={false}
       />
@@ -362,6 +383,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     paddingVertical: 28,
     textAlign: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#bd4b2f',
+    borderRadius: 9,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
   },
 });
 
