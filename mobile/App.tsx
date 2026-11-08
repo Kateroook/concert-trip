@@ -117,7 +117,9 @@ function AppContent() {
               </View>
               <View style={styles.spotifyActions}>
                 <Pressable
-                  onPress={spotify.status?.connected ? spotify.sync : spotify.connect}
+                  onPress={
+                    spotify.status?.connected ? spotify.sync : spotify.connect
+                  }
                   disabled={spotify.busy}
                   style={styles.spotifyButton}
                   accessibilityRole="button"
@@ -126,8 +128,8 @@ function AppContent() {
                     {spotify.busy
                       ? '...'
                       : spotify.status?.connected
-                        ? 'Sync'
-                        : 'Connect'}
+                      ? 'Sync'
+                      : 'Connect'}
                   </Text>
                 </Pressable>
                 {spotify.status?.connected && (
@@ -141,7 +143,9 @@ function AppContent() {
                 )}
               </View>
             </View>
-            {spotify.error && <Text style={styles.spotifyError}>{spotify.error}</Text>}
+            {spotify.error && (
+              <Text style={styles.spotifyError}>{spotify.error}</Text>
+            )}
             <Text style={styles.eyebrow}>CONCERTRIP</Text>
             <Text style={styles.title}>Live shows worth the trip.</Text>
             <Text style={styles.subtitle}>

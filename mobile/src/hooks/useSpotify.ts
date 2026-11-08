@@ -14,7 +14,11 @@ export function useSpotify(enabled: boolean) {
       setStatus(await spotifyApi.getSpotifyStatus());
       setError(null);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Spotify status failed');
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Spotify status failed',
+      );
     }
   }, [enabled]);
 
@@ -40,7 +44,11 @@ export function useSpotify(enabled: boolean) {
     try {
       await spotifyApi.connectSpotify();
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Spotify connection failed');
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Spotify connection failed',
+      );
     } finally {
       setBusy(false);
     }
@@ -52,7 +60,11 @@ export function useSpotify(enabled: boolean) {
     try {
       setStatus(await spotifyApi.syncSpotify());
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Spotify sync failed');
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Spotify sync failed',
+      );
     } finally {
       setBusy(false);
     }
@@ -63,9 +75,18 @@ export function useSpotify(enabled: boolean) {
     setError(null);
     try {
       await spotifyApi.disconnectSpotify();
-      setStatus({ connected: false, providerAccountId: null, lastSyncedAt: null, preferenceCount: 0 });
+      setStatus({
+        connected: false,
+        providerAccountId: null,
+        lastSyncedAt: null,
+        preferenceCount: 0,
+      });
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Spotify disconnect failed');
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Spotify disconnect failed',
+      );
     } finally {
       setBusy(false);
     }

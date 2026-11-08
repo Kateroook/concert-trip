@@ -13,7 +13,9 @@ type AuthorizeResponse = { authorizeUrl: string };
 type SyncResponse = { imported: number; status: SpotifyStatus };
 
 export async function getSpotifyStatus() {
-  return authenticatedRequest<SpotifyStatus>('/api/v1/integrations/spotify/status');
+  return authenticatedRequest<SpotifyStatus>(
+    '/api/v1/integrations/spotify/status',
+  );
 }
 
 export async function connectSpotify() {
@@ -32,5 +34,7 @@ export async function syncSpotify() {
 }
 
 export async function disconnectSpotify() {
-  await authenticatedRequest('/api/v1/integrations/spotify', { method: 'DELETE' });
+  await authenticatedRequest('/api/v1/integrations/spotify', {
+    method: 'DELETE',
+  });
 }
