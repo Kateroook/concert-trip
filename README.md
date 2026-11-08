@@ -76,6 +76,31 @@ curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
 
 Після login передайте `accessToken` як `Authorization: Bearer <token>` для запиту до `/api/v1/events`.
 
+## Spotify integration
+
+Створіть Web API app у [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), додайте Redirect URI з `.env` і заповніть backend-only settings:
+
+```env
+SPOTIFY_CLIENT_ID=<client-id>
+SPOTIFY_CLIENT_SECRET=<client-secret>
+SPOTIFY_REDIRECT_URI=http://127.0.0.1:8000/api/v1/integrations/spotify/callback
+SPOTIFY_TOKEN_ENCRYPTION_KEY=<random-secret>
+```
+
+Для Development Mode власник Spotify app повинен мати Premium, а тестові користувачі мають бути в allowlist. Mobile не отримує Spotify tokens.
+
+Після login:
+
+```bash
+curl -H "Authorization: Bearer <access-token>" \
+  http://127.0.0.1:8000/api/v1/integrations/spotify/authorize
+
+curl -X POST -H "Authorization: Bearer <access-token>" \
+  http://127.0.0.1:8000/api/v1/integrations/spotify/sync
+```
+
+Поточний sync імпортує top artists за трьома періодами та recently played. Preferences є підготовленими даними для наступного recommendation score/AI layer.
+
 ## Ticketmaster sync
 
 Ticketmaster Discovery API використовує ключ лише на backend. Додайте його в `.env`:
