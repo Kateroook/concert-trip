@@ -14,10 +14,12 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { AuthScreen } from './src/components/AuthScreen';
+import { Recommendation } from './src/api/recommendations';
 import { EventStatus, ConcertEvent } from './src/data/events';
 import { useAuth } from './src/hooks/useAuth';
 import { useEvents } from './src/hooks/useEvents';
 import { useSpotify } from './src/hooks/useSpotify';
+import { useRecommendations } from './src/hooks/useRecommendations';
 
 function App() {
   return (
@@ -32,6 +34,10 @@ function AppContent() {
   const safeAreaInsets = useSafeAreaInsets();
   const auth = useAuth();
   const spotify = useSpotify(auth.status === 'signed_in');
+  const [view, setView] = useState<'events' | 'recommended'>('events');
+  const recommendationState = useRecommendations(
+    auth.status === 'signed_in' && view === 'recommended',
+  );
   const { events, loading, error, retry } = useEvents(
     auth.status === 'signed_in',
   );
@@ -87,16 +93,37 @@ function AppContent() {
     setStatus('all');
   };
 
-  const renderEvent = ({ item }: { item: ConcertEvent }) => (
-    <EventCard event={item} />
-  );
+  const renderListItem = ({
+    item,
+  }: {
+    item: ConcertEvent | Recommendation;
+  }) => {
+    if (showingRecommendations) {
+      return <RecommendationCard recommendation={item as Recommendation} />;
+    }
+    return <EventCard event={item as ConcertEvent} />;
+  };
+  const showingRecommendations = view === 'recommended';
+  const listLoading = showingRecommendations
+    ? recommendationState.loading
+    : loading;
+  const listError = showingRecommendations
+    ? recommendationState.error
+    : error;
+  const listData: Array<ConcertEvent | Recommendation> = showingRecommendations
+    ? recommendationState.recommendations
+    : filteredEvents;
 
   return (
     <View style={[styles.container, { paddingTop: safeAreaInsets.top }]}>
-      <FlatList
-        data={filteredEvents}
-        keyExtractor={item => item.id}
-        renderItem={renderEvent}
+      <FlatList<ConcertEvent | Recommendation>
+        data={listData}
+        keyExtractor={item =>
+          showingRecommendations
+            ? (item as Recommendation).event.id
+            : (item as ConcertEvent).id
+        }
+        renderItem={renderListItem}
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <>
@@ -146,6 +173,22 @@ function AppContent() {
             {spotify.error && (
               <Text style={styles.spotifyError}>{spotify.error}</Text>
             )}
+            <View style={styles.viewToggle}>
+              <Pressable
+                onPress={() => setView('events')}
+                style={[styles.viewButton, view === 'events' && styles.viewButtonSelected]}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.viewButtonText, view === 'events' && styles.viewButtonTextSelected]}>Events</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setView('recommended')}
+                style={[styles.viewButton, view === 'recommended' && styles.viewButtonSelected]}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.viewButtonText, view === 'recommended' && styles.viewButtonTextSelected]}>For you</Text>
+              </Pressable>
+            </View>
             <Text style={styles.eyebrow}>CONCERTRIP</Text>
             <Text style={styles.title}>Live shows worth the trip.</Text>
             <Text style={styles.subtitle}>
@@ -176,9 +219,11 @@ function AppContent() {
             />
             <View style={styles.resultsRow}>
               <Text style={styles.results}>
-                {loading
-                  ? 'Loading events...'
-                  : `${filteredEvents.length} events`}
+                {listLoading
+                  ? 'Loading...'
+                  : showingRecommendations
+                    ? `${recommendationState.recommendations.length} recommendations`
+                    : `${filteredEvents.length} events`}
               </Text>
               {(query || country !== 'All' || status !== 'all') && (
                 <Pressable onPress={resetFilters} accessibilityRole="button">
@@ -189,13 +234,13 @@ function AppContent() {
           </>
         }
         ListEmptyComponent={
-          loading ? (
+          listLoading ? (
             <Text style={styles.empty}>Loading events from ConcerTrip...</Text>
-          ) : error ? (
+          ) : listError ? (
             <View style={styles.emptyState}>
-              <Text style={styles.empty}>{error}</Text>
+              <Text style={styles.empty}>{listError}</Text>
               <Pressable
-                onPress={retry}
+                onPress={showingRecommendations ? recommendationState.retry : retry}
                 style={styles.retryButton}
                 accessibilityRole="button"
               >
@@ -280,6 +325,24 @@ function EventCard({ event }: { event: ConcertEvent }) {
         >
           <Text style={styles.ticketButtonText}>Tickets</Text>
         </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function RecommendationCard({ recommendation }: { recommendation: Recommendation }) {
+  return (
+    <View>
+      <EventCard event={recommendation.event} />
+      <View style={styles.recommendationMeta}>
+        <Text style={styles.recommendationScore}>
+          AI match: {Math.round(recommendation.score * 100)}%
+        </Text>
+        {recommendation.reasons.map(reason => (
+          <Text key={reason} style={styles.recommendationReason}>
+            • {reason}
+          </Text>
+        ))}
       </View>
     </View>
   );
@@ -383,6 +446,47 @@ const styles = StyleSheet.create({
     color: '#964238',
     fontSize: 12,
     marginBottom: 16,
+  },
+  viewToggle: {
+    backgroundColor: '#ebe6dc',
+    borderRadius: 10,
+    flexDirection: 'row',
+    marginBottom: 22,
+    padding: 3,
+  },
+  viewButton: {
+    borderRadius: 8,
+    flex: 1,
+    paddingVertical: 9,
+  },
+  viewButtonSelected: {
+    backgroundColor: '#1e2825',
+  },
+  viewButtonText: {
+    color: '#514e47',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  viewButtonTextSelected: {
+    color: '#fffdf8',
+  },
+  recommendationMeta: {
+    backgroundColor: '#e4eee6',
+    borderRadius: 10,
+    marginBottom: 12,
+    marginTop: -7,
+    padding: 12,
+  },
+  recommendationScore: {
+    color: '#1e2825',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  recommendationReason: {
+    color: '#53645a',
+    fontSize: 12,
+    marginTop: 4,
   },
   eyebrow: {
     color: '#bd4b2f',

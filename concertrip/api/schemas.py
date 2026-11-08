@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -108,3 +108,29 @@ class MusicPreferenceResponse(BaseModel):
     weight: float
     genres: list[str]
     model_config = ConfigDict(populate_by_name=True)
+
+
+class RecommendationItem(BaseModel):
+    event: EventItem
+    score: float
+    reasons: list[str]
+
+
+class RecommendationsResponse(BaseModel):
+    items: list[RecommendationItem]
+    model: str
+
+
+class ArtistResponse(BaseModel):
+    id: UUID
+    name: str
+    followed: bool
+    priority: float
+
+
+class FollowArtistRequest(BaseModel):
+    priority: float = Field(default=3.0, ge=0.0, le=10.0)
+
+
+class EventActionRequest(BaseModel):
+    action: Literal["viewed", "saved", "dismissed", "clicked_ticket"]

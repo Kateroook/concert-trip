@@ -154,6 +154,15 @@ class User(TimestampMixin, Base):
     music_preferences = relationship(
         "MusicPreference", back_populates="user", cascade="all, delete-orphan"
     )
+    artist_follows = relationship(
+        "UserArtistFollow", back_populates="user", cascade="all, delete-orphan"
+    )
+    event_actions = relationship(
+        "UserEventAction", back_populates="user", cascade="all, delete-orphan"
+    )
+    profile_embedding = relationship(
+        "UserProfileEmbedding", back_populates="user", cascade="all, delete-orphan", uselist=False
+    )
 
 
 class RefreshToken(TimestampMixin, Base):
@@ -257,3 +266,70 @@ class MusicPreference(TimestampMixin, Base):
 
     user = relationship("User", back_populates="music_preferences")
     artist = relationship("Artist")
+
+
+class UserArtistFollow(TimestampMixin, Base):
+    __tablename__ = "user_artist_follows"
+    __table_args__ = (
+        UniqueConstraint("user_id", "artist_id", name="uq_user_artist_follows_identity"),
+        Index("ix_user_artist_follows_user_priority", "user_id", "priority"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    artist_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("artists.id"), nullable=False)
+    priority: Mapped[Decimal] = mapped_column(Numeric(8, 5), default=Decimal("3.0"), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    user = relationship("User", back_populates="artist_follows")
+    artist = relationship("Artist")
+
+
+class UserEventAction(TimestampMixin, Base):
+    __tablename__ = "user_event_actions"
+    __table_args__ = (
+        UniqueConstraint("user_id", "event_id", "action", name="uq_user_event_actions_identity"),
+        Index("ix_user_event_actions_user", "user_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"), nullable=False
+    )
+    action: Mapped[str] = mapped_column(String(30), nullable=False)
+
+    user = relationship("User", back_populates="event_actions")
+    event = relationship("Event")
+
+
+class EventEmbedding(TimestampMixin, Base):
+    __tablename__ = "event_embeddings"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    model_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    source_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    vector: Mapped[list[float]] = mapped_column(JSON, nullable=False)
+
+    event = relationship("Event")
+
+
+class UserProfileEmbedding(TimestampMixin, Base):
+    __tablename__ = "user_profile_embeddings"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    model_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    source_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    vector: Mapped[list[float]] = mapped_column(JSON, nullable=False)
+
+    user = relationship("User", back_populates="profile_embedding")

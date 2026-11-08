@@ -76,6 +76,16 @@ curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
 
 Після login передайте `accessToken` як `Authorization: Bearer <token>` для запиту до `/api/v1/events`.
 
+## AI recommendations
+
+Для запуску neural embeddings окремо встановіть optional dependency:
+
+```bash
+pip install -r requirements-ai.txt
+```
+
+Без неї backend і тести працюють, але `/api/v1/recommendations` поверне помилку про відсутню AI dependency. Модель кешує embeddings подій і профілю користувача в БД, тому vectors не перераховуються на кожен запит.
+
 ## Spotify integration
 
 Створіть Web API app у [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), додайте Redirect URI з `.env` і заповніть backend-only settings:

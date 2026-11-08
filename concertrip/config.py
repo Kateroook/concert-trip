@@ -63,6 +63,9 @@ class Settings:
         "user-library-read",
         "user-read-private",
     )
+    recommendation_model: str = os.getenv(
+        "RECOMMENDATION_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
+    )
 
     @property
     def has_ticketmaster(self) -> bool:
