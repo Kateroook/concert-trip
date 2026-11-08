@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { fetchEvents } from '../api/events';
 import { ConcertEvent } from '../data/events';
 
-export function useEvents() {
+export function useEvents(enabled = true) {
   const [events, setEvents] = useState<ConcertEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -11,6 +11,14 @@ export function useEvents() {
 
   useEffect(() => {
     let active = true;
+    if (!enabled) {
+      setEvents([]);
+      setLoading(false);
+      setError(null);
+      return () => {
+        active = false;
+      };
+    }
     setLoading(true);
     setError(null);
 
@@ -34,7 +42,7 @@ export function useEvents() {
     return () => {
       active = false;
     };
-  }, [reloadToken]);
+  }, [enabled, reloadToken]);
 
   return {
     events,

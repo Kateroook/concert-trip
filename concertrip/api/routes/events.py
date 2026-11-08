@@ -3,9 +3,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from concertrip.api.deps import get_db
+from concertrip.api.deps import get_current_user, get_db
 from concertrip.api.schemas import EventItem, EventsResponse
 from concertrip.api.services.events import list_events
+from concertrip.models import User
 
 router = APIRouter(prefix="/api/v1/events", tags=["events"])
 
@@ -18,6 +19,7 @@ def get_events(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     session: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
 ) -> EventsResponse:
     items, total = list_events(
         session,

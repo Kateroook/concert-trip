@@ -56,8 +56,25 @@ uvicorn concertrip.api.app:app --host 0.0.0.0 --port 8000 --reload
 
 ```bash
 curl http://127.0.0.1:8000/health
-curl "http://127.0.0.1:8000/api/v1/events?page_size=20"
 ```
+
+Події захищені авторизацією. Для локального режиму `AUTH_DEV_MODE=true` endpoint реєстрації повертає verification token у відповіді та записує його в log. Послідовність перевірки:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","password":"correct horse battery staple"}'
+
+curl -X POST http://127.0.0.1:8000/api/v1/auth/verify-email \
+  -H 'Content-Type: application/json' \
+  -d '{"token":"<verificationToken>"}'
+
+curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","password":"correct horse battery staple"}'
+```
+
+Після login передайте `accessToken` як `Authorization: Bearer <token>` для запиту до `/api/v1/events`.
 
 ## Mobile API connection
 
@@ -89,7 +106,7 @@ alembic downgrade base
 concertrip/
   config.py              налаштування з .env
   db.py                  підключення до бази й базовий клас моделей
-  models.py              моделі джерел, артистів, майданчиків і подій
+  models.py              моделі подій, користувачів і auth-токенів
   api/                    FastAPI endpoints для мобільного клієнта
   sources/
     ticketmaster.py      CT-21  клієнт до API Ticketmaster

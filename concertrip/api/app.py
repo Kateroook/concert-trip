@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from concertrip.api.routes.auth import router as auth_router
 from concertrip.api.routes.events import router as events_router
 from concertrip.config import settings
 
@@ -9,7 +10,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=list(settings.cors_origins),
     allow_credentials=False,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -20,3 +21,4 @@ def health() -> dict[str, str]:
 
 
 app.include_router(events_router)
+app.include_router(auth_router)

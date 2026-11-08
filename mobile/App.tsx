@@ -13,7 +13,9 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { AuthScreen } from './src/components/AuthScreen';
 import { EventStatus, ConcertEvent } from './src/data/events';
+import { useAuth } from './src/hooks/useAuth';
 import { useEvents } from './src/hooks/useEvents';
 
 function App() {
@@ -27,11 +29,13 @@ function App() {
 
 function AppContent() {
   const safeAreaInsets = useSafeAreaInsets();
-  const { events, loading, error, retry } = useEvents();
+  const auth = useAuth();
+  const { events, loading, error, retry } = useEvents(
+    auth.status === 'signed_in',
+  );
   const [query, setQuery] = useState('');
   const [country, setCountry] = useState('All');
   const [status, setStatus] = useState<EventStatus | 'all'>('all');
-
   const countries = useMemo(
     () => ['All', ...Array.from(new Set(events.map(event => event.country)))],
     [events],
@@ -52,6 +56,29 @@ function AppContent() {
     });
   }, [country, events, query, status]);
 
+  if (auth.status === 'loading') {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.empty}>Restoring your session...</Text>
+      </View>
+    );
+  }
+
+  if (auth.status === 'signed_out') {
+    return (
+      <AuthScreen
+        onSignIn={auth.signIn}
+        onRegister={async (email, password) => {
+          const response = await auth.register(email, password);
+          return response.verificationToken;
+        }}
+        onVerify={async token => {
+          await auth.verifyEmail(token);
+        }}
+      />
+    );
+  }
+
   const resetFilters = () => {
     setQuery('');
     setCountry('All');
@@ -71,6 +98,12 @@ function AppContent() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <>
+            <View style={styles.accountRow}>
+              <Text style={styles.accountEmail}>{auth.user?.email}</Text>
+              <Pressable onPress={auth.signOut} accessibilityRole="button">
+                <Text style={styles.reset}>Sign out</Text>
+              </Pressable>
+            </View>
             <Text style={styles.eyebrow}>CONCERTRIP</Text>
             <Text style={styles.title}>Live shows worth the trip.</Text>
             <Text style={styles.subtitle}>
@@ -220,9 +253,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f6f3ed',
   },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   content: {
     padding: 20,
     paddingBottom: 36,
+  },
+  accountRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 28,
+  },
+  accountEmail: {
+    color: '#67645d',
+    flex: 1,
+    fontSize: 12,
+    marginRight: 12,
   },
   eyebrow: {
     color: '#bd4b2f',
