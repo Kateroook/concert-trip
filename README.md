@@ -42,6 +42,40 @@ streamlit run concertrip/ui/app.py
 pytest
 ```
 
+## Backend API
+
+Після створення або оновлення бази імпортуйте демонстраційні події та запустіть API:
+
+```bash
+alembic upgrade head
+python -m concertrip.sources.seed
+uvicorn concertrip.api.app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Перевірка:
+
+```bash
+curl http://127.0.0.1:8000/health
+curl "http://127.0.0.1:8000/api/v1/events?page_size=20"
+```
+
+## Mobile API connection
+
+React Native використовує `API_BASE_URL` у `mobile/src/config.ts`:
+
+- Android emulator: `http://10.0.2.2:8000`;
+- iOS simulator: `http://127.0.0.1:8000`;
+- фізичний Android-пристрій: LAN IP комп'ютера, наприклад `http://192.168.1.10:8000`.
+
+Запуск мобільної частини:
+
+```bash
+cd mobile
+npm start
+# в іншому терміналі
+npm run android
+```
+
 Міграції бази даних:
 
 ```bash
@@ -56,6 +90,7 @@ concertrip/
   config.py              налаштування з .env
   db.py                  підключення до бази й базовий клас моделей
   models.py              моделі джерел, артистів, майданчиків і подій
+  api/                    FastAPI endpoints для мобільного клієнта
   sources/
     ticketmaster.py      CT-21  клієнт до API Ticketmaster
     local_parser.py      CT-22  парсер локального продавця

@@ -33,6 +33,13 @@ class Settings:
     seed_csv: Path = Path(os.getenv("SEED_CSV", ROOT / "data" / "seed_events.csv"))
     countries: tuple[str, ...] = tuple(os.getenv("COUNTRIES", "GB,NL,DE,FR,PL").split(","))
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
+    api_host: str = os.getenv("API_HOST", "0.0.0.0")
+    api_port: int = int(os.getenv("API_PORT", "8000"))
+    cors_origins: tuple[str, ...] = tuple(
+        origin.strip()
+        for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+        if origin.strip()
+    )
 
     @property
     def has_ticketmaster(self) -> bool:
