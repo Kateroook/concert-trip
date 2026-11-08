@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from concertrip.api.routes.auth import router as auth_router
 from concertrip.api.routes.events import router as events_router
+from concertrip.api.routes.spotify import preferences_router, router as spotify_router
 from concertrip.config import settings
 
 app = FastAPI(title="ConcerTrip API", version="0.1.0")
@@ -22,3 +23,5 @@ def health() -> dict[str, str]:
 
 app.include_router(events_router)
 app.include_router(auth_router)
+app.include_router(spotify_router)
+app.include_router(preferences_router)

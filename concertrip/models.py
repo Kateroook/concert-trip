@@ -145,6 +145,15 @@ class User(TimestampMixin, Base):
     verification_tokens = relationship(
         "EmailVerificationToken", back_populates="user", cascade="all, delete-orphan"
     )
+    external_accounts = relationship(
+        "ExternalAccount", back_populates="user", cascade="all, delete-orphan"
+    )
+    spotify_oauth_states = relationship(
+        "SpotifyOAuthState", back_populates="user", cascade="all, delete-orphan"
+    )
+    music_preferences = relationship(
+        "MusicPreference", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class RefreshToken(TimestampMixin, Base):
@@ -179,3 +188,72 @@ class EmailVerificationToken(TimestampMixin, Base):
     used_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="verification_tokens")
+
+
+class ExternalAccount(TimestampMixin, Base):
+    __tablename__ = "external_accounts"
+    __table_args__ = (
+        UniqueConstraint("user_id", "provider", name="uq_external_accounts_user_provider"),
+        UniqueConstraint("provider", "provider_account_id", name="uq_external_accounts_provider_account"),
+        Index("ix_external_accounts_user", "user_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    provider: Mapped[str] = mapped_column(String(30), nullable=False)
+    provider_account_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    access_token_encrypted: Mapped[str] = mapped_column(String(4096), nullable=False)
+    refresh_token_encrypted: Mapped[str] = mapped_column(String(4096), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    scopes: Mapped[str] = mapped_column(String(1000), nullable=False)
+    last_synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="connected", nullable=False)
+
+    user = relationship("User", back_populates="external_accounts")
+
+
+class SpotifyOAuthState(TimestampMixin, Base):
+    __tablename__ = "spotify_oauth_states"
+    __table_args__ = (Index("ix_spotify_oauth_states_hash", "state_hash", unique=True),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    state_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    user = relationship("User", back_populates="spotify_oauth_states")
+
+
+class MusicPreference(TimestampMixin, Base):
+    __tablename__ = "music_preferences"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "provider", "provider_artist_id", "source", "time_range",
+            name="uq_music_preferences_identity",
+        ),
+        Index("ix_music_preferences_user_weight", "user_id", "weight"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    artist_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("artists.id"), nullable=True)
+    provider: Mapped[str] = mapped_column(String(30), nullable=False)
+    provider_artist_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    artist_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    source: Mapped[str] = mapped_column(String(50), nullable=False)
+    time_range: Mapped[str] = mapped_column(String(30), nullable=False)
+    weight: Mapped[Decimal] = mapped_column(Numeric(8, 5), nullable=False)
+    genres: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    observed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+    user = relationship("User", back_populates="music_preferences")
+    artist = relationship("Artist")

@@ -17,6 +17,7 @@ import { AuthScreen } from './src/components/AuthScreen';
 import { EventStatus, ConcertEvent } from './src/data/events';
 import { useAuth } from './src/hooks/useAuth';
 import { useEvents } from './src/hooks/useEvents';
+import { useSpotify } from './src/hooks/useSpotify';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
 function AppContent() {
   const safeAreaInsets = useSafeAreaInsets();
   const auth = useAuth();
+  const spotify = useSpotify(auth.status === 'signed_in');
   const { events, loading, error, retry } = useEvents(
     auth.status === 'signed_in',
   );
@@ -104,6 +106,42 @@ function AppContent() {
                 <Text style={styles.reset}>Sign out</Text>
               </Pressable>
             </View>
+            <View style={styles.spotifyRow}>
+              <View style={styles.spotifyCopy}>
+                <Text style={styles.spotifyTitle}>Spotify preferences</Text>
+                <Text style={styles.spotifySubtitle}>
+                  {spotify.status?.connected
+                    ? `${spotify.status.preferenceCount} preferences synced`
+                    : 'Connect your listening history'}
+                </Text>
+              </View>
+              <View style={styles.spotifyActions}>
+                <Pressable
+                  onPress={spotify.status?.connected ? spotify.sync : spotify.connect}
+                  disabled={spotify.busy}
+                  style={styles.spotifyButton}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.spotifyButtonText}>
+                    {spotify.busy
+                      ? '...'
+                      : spotify.status?.connected
+                        ? 'Sync'
+                        : 'Connect'}
+                  </Text>
+                </Pressable>
+                {spotify.status?.connected && (
+                  <Pressable
+                    onPress={spotify.disconnect}
+                    disabled={spotify.busy}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.spotifyDisconnect}>Disconnect</Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
+            {spotify.error && <Text style={styles.spotifyError}>{spotify.error}</Text>}
             <Text style={styles.eyebrow}>CONCERTRIP</Text>
             <Text style={styles.title}>Live shows worth the trip.</Text>
             <Text style={styles.subtitle}>
@@ -293,6 +331,54 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     marginRight: 12,
+  },
+  spotifyRow: {
+    alignItems: 'center',
+    backgroundColor: '#e4eee6',
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    padding: 14,
+  },
+  spotifyCopy: {
+    flex: 1,
+    marginRight: 12,
+  },
+  spotifyTitle: {
+    color: '#1e2825',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  spotifySubtitle: {
+    color: '#53645a',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  spotifyActions: {
+    alignItems: 'flex-end',
+    gap: 7,
+  },
+  spotifyButton: {
+    backgroundColor: '#1e2825',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  spotifyButtonText: {
+    color: '#fffdf8',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  spotifyDisconnect: {
+    color: '#964238',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  spotifyError: {
+    color: '#964238',
+    fontSize: 12,
+    marginBottom: 16,
   },
   eyebrow: {
     color: '#bd4b2f',

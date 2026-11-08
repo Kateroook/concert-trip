@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -79,3 +79,32 @@ class TokenResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+class SpotifyAuthorizeResponse(BaseModel):
+    authorize_url: str = Field(alias="authorizeUrl")
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class SpotifyStatusResponse(BaseModel):
+    connected: bool
+    provider_account_id: Optional[str] = Field(default=None, alias="providerAccountId")
+    last_synced_at: Optional[datetime] = Field(default=None, alias="lastSyncedAt")
+    preference_count: int = Field(alias="preferenceCount")
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class SpotifySyncResponse(BaseModel):
+    imported: int
+    status: SpotifyStatusResponse
+
+
+class MusicPreferenceResponse(BaseModel):
+    provider: str
+    provider_artist_id: str = Field(alias="providerArtistId")
+    artist_name: str = Field(alias="artistName")
+    source: str
+    time_range: str = Field(alias="timeRange")
+    weight: float
+    genres: list[str]
+    model_config = ConfigDict(populate_by_name=True)

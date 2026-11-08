@@ -47,6 +47,22 @@ class Settings:
         os.getenv("EMAIL_VERIFICATION_EXPIRE_HOURS", "24")
     )
     auth_dev_mode: bool = os.getenv("AUTH_DEV_MODE", "true").lower() == "true"
+    spotify_client_id: str = os.getenv("SPOTIFY_CLIENT_ID", "")
+    spotify_client_secret: str = os.getenv("SPOTIFY_CLIENT_SECRET", "")
+    spotify_redirect_uri: str = os.getenv(
+        "SPOTIFY_REDIRECT_URI",
+        "http://127.0.0.1:8000/api/v1/integrations/spotify/callback",
+    )
+    spotify_mobile_redirect_uri: str = os.getenv(
+        "SPOTIFY_MOBILE_REDIRECT_URI", "concertrip://spotify/callback"
+    )
+    spotify_token_encryption_key: str = os.getenv("SPOTIFY_TOKEN_ENCRYPTION_KEY", "")
+    spotify_scopes: tuple[str, ...] = (
+        "user-top-read",
+        "user-read-recently-played",
+        "user-library-read",
+        "user-read-private",
+    )
 
     @property
     def has_ticketmaster(self) -> bool:
