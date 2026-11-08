@@ -1,5 +1,5 @@
-import { API_BASE_URL } from '../config';
 import { ConcertEvent, EventStatus } from '../data/events';
+import { authenticatedRequest } from './auth';
 
 export type EventsResponse = {
   items: ConcertEvent[];
@@ -24,11 +24,7 @@ export async function fetchEvents(
   if (query.status && query.status !== 'all')
     params.set('status', query.status);
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/events?${params.toString()}`,
+  return authenticatedRequest<EventsResponse>(
+    `/api/v1/events?${params.toString()}`,
   );
-  if (!response.ok) {
-    throw new Error(`Events request failed (${response.status})`);
-  }
-  return response.json() as Promise<EventsResponse>;
 }

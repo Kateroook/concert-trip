@@ -40,6 +40,13 @@ class Settings:
         for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
         if origin.strip()
     )
+    jwt_secret: str = os.getenv("JWT_SECRET", "dev-only-change-this-secret")
+    access_token_expire_minutes: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
+    refresh_token_expire_days: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))
+    email_verification_expire_hours: int = int(
+        os.getenv("EMAIL_VERIFICATION_EXPIRE_HOURS", "24")
+    )
+    auth_dev_mode: bool = os.getenv("AUTH_DEV_MODE", "true").lower() == "true"
 
     @property
     def has_ticketmaster(self) -> bool:
