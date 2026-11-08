@@ -15,8 +15,9 @@ class EventItem(BaseModel):
     venue: str
     city: str
     country: str
-    eventDate: date
+    eventDate: Optional[date] = None
     onSaleDate: Optional[date] = None
+    dateStatus: str = "confirmed"
     ticketType: str
     status: str
     url: str

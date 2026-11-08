@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { fetchEvents } from '../api/events';
+import { fetchAllEvents } from '../api/events';
 import { ConcertEvent } from '../data/events';
 
 export function useEvents(enabled = true) {
@@ -22,7 +22,7 @@ export function useEvents(enabled = true) {
     setLoading(true);
     setError(null);
 
-    fetchEvents()
+    fetchAllEvents()
       .then(response => {
         if (active) setEvents(response.items);
       })

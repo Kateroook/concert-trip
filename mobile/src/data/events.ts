@@ -1,4 +1,14 @@
-export type EventStatus = 'available' | 'limited' | 'low' | 'sold_out';
+export type EventStatus =
+  | 'available'
+  | 'limited'
+  | 'low'
+  | 'sold_out'
+  | 'onsale'
+  | 'offsale'
+  | 'canceled'
+  | 'postponed'
+  | 'rescheduled'
+  | 'unknown';
 
 export type ConcertEvent = {
   id: string;
@@ -6,8 +16,9 @@ export type ConcertEvent = {
   venue: string;
   city: string;
   country: string;
-  eventDate: string;
-  onSaleDate: string;
+  eventDate: string | null;
+  dateStatus?: 'confirmed' | 'tba' | 'tbd' | 'unknown';
+  onSaleDate: string | null;
   ticketType: string;
   status: EventStatus;
   url: string;

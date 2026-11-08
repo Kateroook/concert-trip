@@ -43,6 +43,7 @@ class Artist(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     normalized_name: Mapped[str] = mapped_column(String(200), nullable=False)
     musicbrainz_id: Mapped[str] = mapped_column(String(36), unique=True, nullable=True)
+    ticketmaster_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=True)
 
     events = relationship("Event", back_populates="artist")
 
@@ -61,6 +62,7 @@ class Venue(TimestampMixin, Base):
     address: Mapped[str] = mapped_column(String(300), nullable=True)
     latitude: Mapped[Decimal] = mapped_column(Numeric(9, 6), nullable=True)
     longitude: Mapped[Decimal] = mapped_column(Numeric(9, 6), nullable=True)
+    ticketmaster_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=True)
 
     events = relationship("Event", back_populates="venue")
 
@@ -71,6 +73,7 @@ class Event(TimestampMixin, Base):
         UniqueConstraint("source_id", "external_id", name="uq_events_source_external"),
         Index("ix_events_date", "event_date"),
         Index("ix_events_status_date", "status", "event_date"),
+        Index("ix_events_date_status", "date_status", "event_date"),
         Index("ix_events_artist_date", "artist_id", "event_date"),
         Index("ix_events_venue_date", "venue_id", "event_date"),
     )
@@ -81,7 +84,8 @@ class Event(TimestampMixin, Base):
     venue_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("venues.id"), nullable=False)
     external_id: Mapped[str] = mapped_column(String(200), nullable=False)
     title: Mapped[str] = mapped_column(String(300), nullable=True)
-    event_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    event_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    date_status: Mapped[str] = mapped_column(String(20), default="confirmed", nullable=False)
     on_sale_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(50), nullable=False)
     url: Mapped[str] = mapped_column(String(1000), nullable=False)
@@ -99,6 +103,7 @@ class Event(TimestampMixin, Base):
 class EventTicketOption(TimestampMixin, Base):
     __tablename__ = "event_ticket_options"
     __table_args__ = (
+        UniqueConstraint("event_id", "source_id", "external_key", name="uq_ticket_options_external"),
         Index("ix_ticket_options_event_status", "event_id", "availability_status"),
     )
 
@@ -107,6 +112,7 @@ class EventTicketOption(TimestampMixin, Base):
         ForeignKey("events.id", ondelete="CASCADE"), nullable=False
     )
     source_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sources.id"), nullable=False)
+    external_key: Mapped[str] = mapped_column(String(200), nullable=True)
     raw_label: Mapped[str] = mapped_column(String(300), nullable=False)
     ticket_type: Mapped[str] = mapped_column(String(30), nullable=False)
     is_vip: Mapped[bool] = mapped_column(default=False, nullable=False)

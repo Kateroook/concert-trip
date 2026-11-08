@@ -124,8 +124,11 @@ function AppContent() {
               onSelect={setCountry}
             />
             <FilterRow
-              label="Availability"
-              options={['all', 'available', 'limited', 'low', 'sold_out']}
+              label="Status"
+              options={[
+                'all',
+                ...Array.from(new Set(events.map(event => event.status))),
+              ]}
               selected={status}
               onSelect={value => setStatus(value as EventStatus | 'all')}
             />
@@ -217,7 +220,7 @@ function EventCard({ event }: { event: ConcertEvent }) {
     <View style={styles.card}>
       <View style={styles.cardTopline}>
         <Text style={styles.date}>{formatDate(event.eventDate)}</Text>
-        <Text style={[styles.status, styles[`status_${event.status}`]]}>
+        <Text style={[styles.status, getStatusStyle(event.status)]}>
           {event.status.replace('_', ' ')}
         </Text>
       </View>
@@ -240,12 +243,30 @@ function EventCard({ event }: { event: ConcertEvent }) {
   );
 }
 
-function formatDate(value: string) {
+function formatDate(value: string | null) {
+  if (!value) return 'Date to be announced';
   return new Intl.DateTimeFormat('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
   }).format(new Date(`${value}T12:00:00`));
+}
+
+function getStatusStyle(status: EventStatus) {
+  switch (status) {
+    case 'available':
+    case 'onsale':
+      return styles.status_available;
+    case 'limited':
+    case 'low':
+      return styles.status_limited;
+    case 'sold_out':
+    case 'offsale':
+    case 'canceled':
+      return styles.status_sold_out;
+    default:
+      return styles.status_unknown;
+  }
 }
 
 const styles = StyleSheet.create({
@@ -384,6 +405,7 @@ const styles = StyleSheet.create({
   status_limited: { backgroundColor: '#f6dfbd', color: '#8b5a1b' },
   status_low: { backgroundColor: '#f6dfbd', color: '#8b5a1b' },
   status_sold_out: { backgroundColor: '#ead8d5', color: '#964238' },
+  status_unknown: { backgroundColor: '#e5e0d6', color: '#67645d' },
   artist: {
     color: '#1e2825',
     fontSize: 22,
