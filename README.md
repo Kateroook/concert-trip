@@ -42,12 +42,72 @@ streamlit run concertrip/ui/app.py
 pytest
 ```
 
+## Backend API
+
+Після створення або оновлення бази імпортуйте демонстраційні події та запустіть API:
+
+```bash
+alembic upgrade head
+python -m concertrip.sources.seed
+uvicorn concertrip.api.app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Перевірка:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+Події захищені авторизацією. Для локального режиму `AUTH_DEV_MODE=true` endpoint реєстрації повертає verification token у відповіді та записує його в log. Послідовність перевірки:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","password":"correct horse battery staple"}'
+
+curl -X POST http://127.0.0.1:8000/api/v1/auth/verify-email \
+  -H 'Content-Type: application/json' \
+  -d '{"token":"<verificationToken>"}'
+
+curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","password":"correct horse battery staple"}'
+```
+
+Після login передайте `accessToken` як `Authorization: Bearer <token>` для запиту до `/api/v1/events`.
+
+## Mobile API connection
+
+React Native використовує `API_BASE_URL` у `mobile/src/config.ts`:
+
+- Android emulator: `http://10.0.2.2:8000`;
+- iOS simulator: `http://127.0.0.1:8000`;
+- фізичний Android-пристрій: LAN IP комп'ютера, наприклад `http://192.168.1.10:8000`.
+
+Запуск мобільної частини:
+
+```bash
+cd mobile
+npm start
+# в іншому терміналі
+npm run android
+```
+
+Міграції бази даних:
+
+```bash
+alembic upgrade head
+alembic downgrade base
+```
+
 ## Структура
 
 ```
 concertrip/
   config.py              налаштування з .env
   db.py                  підключення до бази й базовий клас моделей
+  models.py              моделі подій, користувачів і auth-токенів
+  api/                    FastAPI endpoints для мобільного клієнта
   sources/
     ticketmaster.py      CT-21  клієнт до API Ticketmaster
     local_parser.py      CT-22  парсер локального продавця
@@ -63,6 +123,7 @@ concertrip/
     app.py               CT-71  веб-інтерфейс
 data/
   seed_events.csv        резервний набір подій для демонстрації
+alembic/                  міграції схеми бази даних
 tests/                   тести
 docs/                    нотатки з досліджень і рішення щодо архітектури
 ```
@@ -78,8 +139,8 @@ docs/                    нотатки з досліджень і рішенн�
 
 ## Стан робіт
 
-| Задача | Що зроблено |
-| --- | --- |
-| CT-11 Каркас репозиторію | готово |
+| Задача                           | Що зроблено                                                 |
+| -------------------------------- | ----------------------------------------------------------- |
+| CT-11 Каркас репозиторію         | готово                                                      |
 | CT-31 Класифікація типів квитків | готово, точність 20 із 20 на тестовому наборі з п'яти країн |
-| решта | за планом спринтів |
+| решта                            | за планом спринтів                                          |
