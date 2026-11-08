@@ -76,6 +76,29 @@ curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
 
 Після login передайте `accessToken` як `Authorization: Bearer <token>` для запиту до `/api/v1/events`.
 
+## Ticketmaster sync
+
+Ticketmaster Discovery API використовує ключ лише на backend. Додайте його в `.env`:
+
+```env
+TICKETMASTER_API_KEY=<your-key>
+```
+
+Застосуйте міграції та перевірте ключ без запису у БД:
+
+```bash
+alembic upgrade head
+python -m concertrip.sources.ticketmaster --dry-run --country GB --minimum-events 1
+```
+
+Повний sync працює по країнах із `COUNTRIES` і зупиняється після 200 унікальних подій:
+
+```bash
+python -m concertrip.sources.ticketmaster --minimum-events 200
+```
+
+Client дотримується ліміту Ticketmaster у 5 запитів на секунду, повторює тимчасові `429/5xx` помилки та не виводить API key у log. TBA/TBD події зберігаються з `dateStatus`, але без вигаданої дати.
+
 ## Mobile API connection
 
 React Native використовує `API_BASE_URL` у `mobile/src/config.ts`:

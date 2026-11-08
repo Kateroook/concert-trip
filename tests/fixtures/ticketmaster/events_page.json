@@ -1,0 +1,56 @@
+{
+  "_embedded": {
+    "events": [
+      {
+        "id": "tm-confirmed-001",
+        "name": "Tame Impala Live",
+        "url": "https://ticketmaster.example/events/tm-confirmed-001",
+        "classifications": [{"segment": {"name": "Music"}}],
+        "dates": {
+          "timezone": "Europe/London",
+          "start": {
+            "localDate": "2027-05-28",
+            "localTime": "19:30:00",
+            "dateTime": "2027-05-28T19:30:00Z"
+          },
+          "status": {"code": "onsale"},
+          "sales": {"public": {"startDateTime": "2026-08-28T09:00:00Z"}}
+        },
+        "priceRanges": [
+          {"type": "standard", "currency": "GBP", "min": 55.0, "max": 95.0},
+          {"type": "premium", "currency": "GBP", "min": 120.0, "max": 150.0}
+        ],
+        "_embedded": {
+          "attractions": [{"id": "tm-artist-001", "name": "Tame Impala"}],
+          "venues": [{
+            "id": "tm-venue-001",
+            "name": "Co-op Live",
+            "city": {"name": "Manchester"},
+            "country": {"countryCode": "GB"},
+            "address": {"line1": "21 Etihad Campus"},
+            "location": {"latitude": "53.4831", "longitude": "-2.2004"}
+          }]
+        }
+      },
+      {
+        "id": "tm-tba-002",
+        "name": "Future Music Event",
+        "url": "https://ticketmaster.example/events/tm-tba-002",
+        "dates": {
+          "start": {"dateTBA": true},
+          "status": {"code": "offsale"}
+        },
+        "_embedded": {
+          "attractions": [{"id": "tm-artist-002", "name": "Future Artist"}],
+          "venues": [{
+            "id": "tm-venue-002",
+            "name": "The O2",
+            "city": {"name": "London"},
+            "country": {"countryCode": "GB"}
+          }]
+        }
+      }
+    ]
+  },
+  "page": {"size": 100, "totalElements": 2, "totalPages": 1, "number": 0}
+}
