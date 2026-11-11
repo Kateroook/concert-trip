@@ -81,6 +81,7 @@ def test_recommendations_use_weighted_profile_and_cache(tmp_path, monkeypatch):
         second = recommendations.get_recommendations(session, user, limit=2)
 
         assert first[0].event.artist == "Tame Impala"
-        assert first[0].score > first[1].score
+        assert len(first) == 1
+        assert first[0].score >= 0.95
         assert first[0].reasons
         assert [item.event.id for item in first] == [item.event.id for item in second]

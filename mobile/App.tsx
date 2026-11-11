@@ -107,9 +107,7 @@ function AppContent() {
   const listLoading = showingRecommendations
     ? recommendationState.loading
     : loading;
-  const listError = showingRecommendations
-    ? recommendationState.error
-    : error;
+  const listError = showingRecommendations ? recommendationState.error : error;
   const listData: Array<ConcertEvent | Recommendation> = showingRecommendations
     ? recommendationState.recommendations
     : filteredEvents;
@@ -176,17 +174,37 @@ function AppContent() {
             <View style={styles.viewToggle}>
               <Pressable
                 onPress={() => setView('events')}
-                style={[styles.viewButton, view === 'events' && styles.viewButtonSelected]}
+                style={[
+                  styles.viewButton,
+                  view === 'events' && styles.viewButtonSelected,
+                ]}
                 accessibilityRole="button"
               >
-                <Text style={[styles.viewButtonText, view === 'events' && styles.viewButtonTextSelected]}>Events</Text>
+                <Text
+                  style={[
+                    styles.viewButtonText,
+                    view === 'events' && styles.viewButtonTextSelected,
+                  ]}
+                >
+                  Events
+                </Text>
               </Pressable>
               <Pressable
                 onPress={() => setView('recommended')}
-                style={[styles.viewButton, view === 'recommended' && styles.viewButtonSelected]}
+                style={[
+                  styles.viewButton,
+                  view === 'recommended' && styles.viewButtonSelected,
+                ]}
                 accessibilityRole="button"
               >
-                <Text style={[styles.viewButtonText, view === 'recommended' && styles.viewButtonTextSelected]}>For you</Text>
+                <Text
+                  style={[
+                    styles.viewButtonText,
+                    view === 'recommended' && styles.viewButtonTextSelected,
+                  ]}
+                >
+                  For you
+                </Text>
               </Pressable>
             </View>
             <Text style={styles.eyebrow}>CONCERTRIP</Text>
@@ -222,8 +240,8 @@ function AppContent() {
                 {listLoading
                   ? 'Loading...'
                   : showingRecommendations
-                    ? `${recommendationState.recommendations.length} recommendations`
-                    : `${filteredEvents.length} events`}
+                  ? `${recommendationState.recommendations.length} recommendations`
+                  : `${filteredEvents.length} events`}
               </Text>
               {(query || country !== 'All' || status !== 'all') && (
                 <Pressable onPress={resetFilters} accessibilityRole="button">
@@ -240,7 +258,9 @@ function AppContent() {
             <View style={styles.emptyState}>
               <Text style={styles.empty}>{listError}</Text>
               <Pressable
-                onPress={showingRecommendations ? recommendationState.retry : retry}
+                onPress={
+                  showingRecommendations ? recommendationState.retry : retry
+                }
                 style={styles.retryButton}
                 accessibilityRole="button"
               >
@@ -330,7 +350,11 @@ function EventCard({ event }: { event: ConcertEvent }) {
   );
 }
 
-function RecommendationCard({ recommendation }: { recommendation: Recommendation }) {
+function RecommendationCard({
+  recommendation,
+}: {
+  recommendation: Recommendation;
+}) {
   return (
     <View>
       <EventCard event={recommendation.event} />

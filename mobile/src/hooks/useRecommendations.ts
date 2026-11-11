@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 import * as recommendationsApi from '../api/recommendations';
 
 export function useRecommendations(enabled: boolean) {
-  const [recommendations, setRecommendations] = useState<recommendationsApi.Recommendation[]>([]);
+  const [recommendations, setRecommendations] = useState<
+    recommendationsApi.Recommendation[]
+  >([]);
   const [model, setModel] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,11 @@ export function useRecommendations(enabled: boolean) {
       })
       .catch(requestError => {
         if (active) {
-          setError(requestError instanceof Error ? requestError.message : 'Could not load recommendations');
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : 'Could not load recommendations',
+          );
         }
       })
       .finally(() => {

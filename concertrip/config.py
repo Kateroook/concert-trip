@@ -31,7 +31,7 @@ class Settings:
     telegram_bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
     anthropic_api_key: str = os.getenv("ANTHROPIC_API_KEY", "")
     seed_csv: Path = Path(os.getenv("SEED_CSV", ROOT / "data" / "seed_events.csv"))
-    countries: tuple[str, ...] = tuple(os.getenv("COUNTRIES", "GB,NL,DE,FR,PL").split(","))
+    countries: tuple[str, ...] = tuple(os.getenv("COUNTRIES", "GB,NL,DE,FR,PL,US").split(","))
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
     api_host: str = os.getenv("API_HOST", "0.0.0.0")
     api_port: int = int(os.getenv("API_PORT", "8000"))
