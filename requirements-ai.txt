@@ -1,0 +1,2 @@
+# Optional neural recommendation runtime
+sentence-transformers==3.3.1

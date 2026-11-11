@@ -2,7 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from concertrip.api.routes.auth import router as auth_router
+from concertrip.api.routes.artists import router as artists_router
 from concertrip.api.routes.events import router as events_router
+from concertrip.api.routes.recommendations import actions_router, router as recommendations_router
 from concertrip.api.routes.spotify import preferences_router, router as spotify_router
 from concertrip.config import settings
 
@@ -25,3 +27,6 @@ app.include_router(events_router)
 app.include_router(auth_router)
 app.include_router(spotify_router)
 app.include_router(preferences_router)
+app.include_router(recommendations_router)
+app.include_router(actions_router)
+app.include_router(artists_router)
