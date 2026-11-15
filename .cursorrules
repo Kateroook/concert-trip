@@ -1,0 +1,217 @@
+# ConcerTrip — Build Specification
+
+Save as `.cursorrules` in the repository root.
+
+---
+
+## Your role
+
+You are the lead developer on this project. You own the architecture, the implementation order, and the code quality. Nobody will hand you detailed tickets — this document is the full brief, and you decide how to get there.
+
+Two students own the product. They will review your pull requests, test the app, and answer product questions. They will not design your modules for you.
+
+What this means in practice:
+
+- Pick the implementation order yourself, but keep the app runnable after every step. Never leave the repository in a state where `streamlit run` fails.
+- When something in this brief is ambiguous, choose the simpler option and write a one-line note in `DECISIONS.md` explaining what you chose and why. Do not stall waiting for an answer.
+- When a requirement would take more than roughly half a day, propose a smaller version first.
+- The deadline is three weeks. A complete, working narrow path beats a wide half-finished one.
+
+---
+
+## What we are building
+
+ConcerTrip watches concerts by artists a user cares about and tells them, in time, when they can buy a ticket in the section they actually want.
+
+The problem: a fan misses the on-sale moment because announcements are scattered across dozens of channels and every country has different ticket sellers. By the time they find out, the show is sold out. Existing services notify you that your artist is playing — none of them let you say "standing only, anywhere in Europe, tell me the moment it becomes buyable."
+
+### The core loop
+
+1. The user builds a **watchlist** of artists — manually, or by importing their most-played artists from Spotify.
+2. The **collector agent** gathers events for those artists from multiple sources.
+3. The user browses the event feed and **marks events they would travel to**, with a ticket-type filter (for example: standing only).
+4. The **availability agent** checks those marked events hourly.
+5. When availability changes from unavailable to available, the user gets a **Telegram message**: artist, city, date, ticket type, link, urgency, and a rough trip cost estimate.
+
+Order matters: **ticket first, trip second**. The user does not pick a destination and then hope tickets appear. They pick artists, see where those artists play, and decide once tickets are real. "Trip" is not an entity — it is a cost estimate shown on an event card.
+
+---
+
+## User stories
+
+Build against these. Each one must be demonstrable end to end.
+
+**US-1.** As a fan, I add an artist to my watchlist so the system starts looking for their shows.
+
+**US-2.** As a fan, I import my top artists from Spotify and tick the ones I want to follow, so I do not type fifty names.
+
+**US-3.** As a fan, I see all upcoming events for my watchlist across countries, filtered by ticket type, so I can tell where standing tickets exist at all.
+
+**US-4.** As a fan, I mark specific events as "I would go to this one" with a ticket-type filter, so the system watches only what matters to me.
+
+**US-5.** As a fan, I get a Telegram message within minutes of tickets becoming available for a marked event, so I am not too late.
+
+**US-6.** As a fan, I see how fast a show is likely to sell out, so I know whether to drop everything or wait.
+
+**US-7.** As a fan, I see a rough cost range for travelling to an event, so I know if it is realistic before I buy.
+
+**US-8.** As a fan following a festival, I see a score for the whole lineup — not just "one of your artists plays there" — so I can judge whether the trip is worth it.
+
+---
+
+## Product rules
+
+These were decided after research. Do not revisit them on your own.
+
+**Alerts fire only for explicitly added artists.** Taste similarity affects feed ordering and nothing else. A concert is an expensive decision; a single irrelevant alert gets the bot muted within days.
+
+**On-sale dates are extracted, never predicted.** If the announcement does not state a date, store `None`. A plausible invented date is worse than no date.
+
+**No automated purchasing, ever.** This product notifies fans. It must not become a tool for scalpers. No cart automation, no queue bots, no checkout flows.
+
+**VIP is a flag, not a ticket type.** Golden Circle is standing; a VIP box is seated. Store type and VIP separately.
+
+**Trip cost is an estimate range, never a booking.** No booking links, no "reserve now" prompts. Booking happens after the ticket is secured, outside this app.
+
+**Respect the sites we read.** Check `robots.txt` before adding a source, throttle requests, identify the client honestly. We collect public announcements to notify fans.
+
+---
+
+## Stack
+
+Python 3.11+. SQLite via SQLAlchemy. httpx and BeautifulSoup for collection. APScheduler for scheduling. Streamlit for the UI. python-telegram-bot for notifications. Anthropic API for extracting fields from unstructured text. pytest for tests.
+
+Do not add dependencies without asking. If a task seems to need one, explain why first.
+
+---
+
+## Architecture
+
+The whole system rests on one idea: **every source returns the same shape**, whether it is a REST API, structured markup, a hand-written parser, or a model reading a page. That is what makes adding the tenth ticket seller a config line instead of a new integration.
+
+```python
+@dataclass
+class RawEvent:
+    source_id: str                 # "ticketmaster", "ebilet", "seed"
+    external_id: str               # id within that source
+    artist_names: list[str]        # as written by the source, unnormalized
+    venue: str
+    city: str
+    country: str                   # ISO code: GB, PL, DE
+    event_date: date
+    ticket_types_raw: list[str]    # "Płyta stojąca", "Fosse Or"
+    on_sale_date: date | None      # None if not announced
+    presale_date: date | None
+    status: str                    # available | limited | low | sold_out | unknown
+    url: str
+    is_festival: bool = False
+    lineup: list[str] | None = None
+
+class Source(Protocol):
+    def fetch(self, since: date) -> list[RawEvent]: ...
+```
+
+Sources never write to the database. Normalization, persistence, and deduplication happen once, downstream, identically for all sources.
+
+Four collection strategies, in descending order of reliability. A source declares which one it uses in config:
+
+1. **API** — Ticketmaster Discovery. Cheapest and most accurate where available.
+2. **Structured markup** — `schema.org/Event` JSON-LD embedded in HTML. Many sellers publish it for search engines; it needs no per-site rules.
+3. **Site rules** — hand-written selectors for one site. Use only when the first two do not apply.
+4. **Model extraction** — hand the page text to the model and get structured fields back. Slowest and least certain; the fallback that works anywhere.
+
+### Tables
+
+`artist` · `venue` · `event` · `ticket_type` (raw name, normalized type, VIP flag) · `watch_item` (artist the user follows) · `watch_event` (specific event marked, with ticket-type filter) · `alert` (what was sent, when) · `availability_snapshot` (event status over time) · `source_run` (each collection run: events found, errors)
+
+### Existing code
+
+`concertrip/normalize/ticket_type.py` is finished and tested — it maps seller section names from five countries onto `STANDING`, `SEATED`, `OTHER`, `UNKNOWN` plus a VIP flag. It scores 20/20 on its test set. It matches the **longest** dictionary entry, not the first: "sektor" must not beat "stojący", "circle" must not beat "standing". Keep that behaviour when extending the dictionary.
+
+A Spotify API integration also exists. Use it for exactly one thing: showing the user's top artists so they can tick which ones to follow. Do not build recommendations on it.
+
+---
+
+## Build order
+
+Each step ends with a runnable app and passing tests. Do not start the next one until the current one is demonstrable.
+
+**Step 1 — Storage.** Tables, migration, seed fixtures. Done when a test creates every table and round-trips a record.
+
+**Step 2 — Collection skeleton.** `Source` protocol, config-driven source registry, dedup on `(source_id, external_id)`, and the seed CSV source. Done when the app shows 300 events from the bundled CSV with no network access.
+
+**Step 3 — Real sources.** JSON-LD collector, then the Ticketmaster client. Done when ≥200 events from GB, NL, DE, FR, PL are in the database and rate limits are respected.
+
+**Step 4 — Watchlist.** Add and remove artists manually; Spotify import with checkboxes. Done when a user can follow five artists in under a minute.
+
+**Step 5 — Feed.** Event list filtered by country, ticket type, date; sorted by relevance; a "watch this event" button with a ticket-type filter. Done when US-3 and US-4 work without touching code.
+
+**Step 6 — Availability tracking.** Hourly job snapshotting status of marked events; detect transitions; enqueue alerts. Done when a simulated status change produces a queued alert.
+
+**Step 7 — Telegram bot.** `/start`, `/watch`, `/mute`, delivery from the queue, retries, quiet hours. Done when a real message lands within ten minutes of a status change.
+
+**Step 8 — Urgency score.** Three levels with a plain-language explanation of what drove the score. Features: venue capacity, artist popularity, city, days until the event.
+
+**Step 9 — Trip cost.** A range per origin-destination pair from a static table, shown on the event card with an explicit "estimate only" note.
+
+**Step 10 — Model extraction.** Structured field extraction from pages with no markup. Mark low-confidence fields instead of silently trusting them. Measure accuracy on twenty saved pages.
+
+**Step 11 — Festival scoring.** Three components, scored separately, never averaged into one number:
+- **Anchor strength** — the best match from the watchlist. One beloved artist justifies the trip alone.
+- **Coverage** — the share of the lineup the user would enjoy.
+- **Penalty** — the share of the lineup in genres the user marked as unwanted.
+
+A festival with one adored artist and twenty neutral ones must score high. Thirty merely-fine artists and nothing beloved must score low. Averaging breaks both cases. Lineups are announced in waves, so recompute on update and notify when the score crosses a threshold.
+
+---
+
+## Design
+
+Bright, pixel-art, deliberately toy-like — a retro game about chasing music across Europe. Not a flat corporate dashboard. This is our own design language; do not clone any existing product's interface.
+
+**Palette.** Background `#1A1033`. Card surfaces `#2D1B4E`. Acid teal `#00E5C7` for actions and available tickets. Hot pink `#FF4D9D` for urgency. Yellow `#FFD93D` for warnings. Muted `#6B5B8C` for disabled. Text `#F5F0FF`.
+
+**Type.** Headings in `Press Start 2P` at 10–14px — it is wide, so keep it small. Body in `VT323` or `Silkscreen` at 16–18px. Long descriptions may fall back to a regular monospace.
+
+**Shapes.** `border-radius: 0` everywhere. Solid 3px borders. Offset block shadows, never blurred: `box-shadow: 4px 4px 0 #000`. Buttons shift 2px down-right on press with a shrinking shadow, like a physical key.
+
+**Components.**
+- Event card reads like a game card: artist name in pixel type, city and date below, ticket-type badge at the side, status strip at the bottom.
+- Ticket status is a pixel icon, not a word: green square available, yellow low, red sold out, grey not yet on sale.
+- Urgency renders as a three-segment meter, like a health bar.
+- Loading is a three-or-four-frame pixel animation, never a spinner.
+- Empty states get a pixel illustration and one human sentence.
+
+**Motion** is stepped and abrupt. `transition: none`; states change in jumps. That is the aesthetic, not a bug.
+
+**The limit.** Pixel styling lives in shapes, colours, and type — never in usability. Dates stay readable, tap targets stay large, the important thing on a card is obvious at a glance. If the pixel font makes a date hard to read, use the regular one.
+
+---
+
+## Non-goals
+
+Do not build: ticket purchasing or cart automation, a mobile app, user accounts with passwords (single-user local app is fine), live flight or hotel pricing, payment handling, a public API, Docker or Kubernetes setup, i18n beyond Ukrainian UI strings.
+
+---
+
+## Working rules
+
+- UI strings and code comments in Ukrainian. Identifiers, table and function names in English.
+- A test for every unit of work. Collector tests run against saved HTML fixtures — the suite must pass offline.
+- Secrets come from `.env` only. Never hardcode a key, not even temporarily. A new key means an empty line in `.env.example`.
+- Missing data is `None`. Never invent a plausible value.
+- One branch per unit of work, named `ct-NN-short-slug`; one pull request each.
+- Touching more than three files means writing the plan first, then the code.
+- The app must start with no API keys at all, running on the bundled seed data. If a key is required to boot, that is a configuration bug.
+
+---
+
+## Definition of done for the whole project
+
+A reviewer clones the repository, runs three commands, and within five minutes:
+
+- sees a feed of real events from at least three sources,
+- adds an artist to the watchlist and marks an event with a standing-only filter,
+- triggers a simulated availability change and receives a Telegram message,
+- opens an event card and sees ticket type, urgency, and a trip cost range,
+- runs `pytest` and sees everything pass without network access.
