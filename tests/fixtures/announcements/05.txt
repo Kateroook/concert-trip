@@ -1,0 +1,9 @@
+ARTIST: Fontaines DC
+VENUE: Barrowland
+CITY: Glasgow
+COUNTRY: GB
+DATE: 2027-05-20
+TICKETS: Standing - General Admission
+ON_SALE: 2026-09-05
+STATUS: available
+URL: https://example.org/pages/05

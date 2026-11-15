@@ -1,0 +1,9 @@
+ARTIST: Rosalia
+VENUE: Roundhouse
+CITY: London
+COUNTRY: GB
+DATE: 2027-04-20
+TICKETS: Standing - General Admission
+ON_SALE: 2026-09-04
+STATUS: unknown
+URL: https://example.org/pages/04

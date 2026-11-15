@@ -1,0 +1,9 @@
+ARTIST: Wet Leg
+VENUE: Victoria Park
+CITY: London
+COUNTRY: GB
+DATE: 2027-07-20
+TICKETS: Standing - General Admission
+ON_SALE: 2026-09-07
+STATUS: sold_out
+URL: https://example.org/pages/07

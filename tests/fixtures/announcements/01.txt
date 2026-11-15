@@ -1,0 +1,9 @@
+ARTIST: Tame Impala
+VENUE: Co-op Live
+CITY: Manchester
+COUNTRY: GB
+DATE: 2027-01-20
+TICKETS: Standing - General Admission
+ON_SALE: 2026-09-01
+STATUS: available
+URL: https://example.org/pages/01
